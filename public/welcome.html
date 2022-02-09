@@ -1,0 +1,367 @@
+<script type="module">
+
+// import kaboom lib
+import kaboom from "https://unpkg.com/kaboom/dist/kaboom.mjs";
+
+// initialize kaboom context
+kaboom({
+    // Scale the whole game up
+    scale: 3,
+    // Set the default font
+    font: "sinko",
+    background: [51, 151, 255]
+})
+var fundsTracker = 0
+var levelTracker = 1
+
+// Loading a multi-frame sprite
+loadSprite("dino", "sprites/asprite.png", {
+    // The image contains 9 frames layed out horizontally, slice it into individual frames
+        sliceY: 16,
+        sliceX:7,
+
+    // Define animations
+    anims: {
+        "idle": {
+            // Starts from frame 0, ends at frame 3
+            from: 0,
+            to: 0,
+            // Frame per second
+            speed: 5,
+            loop: true,
+        },"run": {
+            from: 8,
+            to: 9,
+            speed: 10,
+            loop: true,
+        },
+        // This animation only has 1 frame
+        "jump": 8
+    
+    },
+})
+loadSprite("money", "sprites/coins.png", {
+    // The image contains 9 frames layed out horizontally, slice it into individual frames
+        sliceX:5,
+        sliceY:8,
+
+    // Define animations
+    anims: {
+        "idle": {
+            // Starts from frame 0, ends at frame 3
+            from: 20,
+            to: 24,
+            // Frame per second
+            speed: 5,
+            loop: true,
+        },
+        
+    },
+})
+loadSprite("ground","sprites/jungle/tileset.png")
+loadSprite("sky","sprites/clouds.png")
+loadSprite("farground", "sprites/far-grounds.png")
+loadSprite("house", "sprites/shack.png")
+
+
+const SPEED = 120
+const JUMP_FORCE = 700
+gravity(640)
+const LEVELS = [
+    [
+    "                ",
+    "                ",
+    "                ",
+    "                ",
+    "                ",
+    "                ",
+    "                ",
+    "      @     ^   ",
+    "================",
+    ],
+    [
+    "                ",
+    "                ",
+    "                ",
+    "        $       ",
+    "        =       ",
+    "            ^   ",
+    "  =  = ==   =   ",
+    "      @         ",
+    "================",
+    ],
+]
+scene("game", ({ levelIdx,funds}) => {
+var upperSkyLeft = add([sprite("sky"),pos(0, 100),])
+var upperSkyRight =add([sprite("sky"),pos(510, 100),])
+upperSkyRight.flipY(true)
+upperSkyLeft.flipY(true)
+add([sprite("sky"),pos(0, 0),])
+add([sprite("sky"),pos(510, 0),])
+upperSkyRight.flipY(true)
+add([sprite("sky"),pos(0, 375),])
+add([sprite("farground"),pos(0, 500),])
+add([sprite("sky"),pos(510, 375),])
+add([sprite("farground"),pos(400, 500),])
+    const level = addLevel(LEVELS[levelIdx || 0], {
+    // The size of each grid
+    width: 64,
+    height: 64,
+    // The position of the top left block
+    pos: vec2(50, 130),
+    // Define what each symbol means (in components)
+    "@": () => [
+        sprite("dino"),
+        area(),
+        body(),
+        origin("bot"),
+        "player",
+    ],
+    "=": () => [
+        sprite("ground"),
+        area({ width: 55, height: 38 }),
+        solid(),
+        origin("bot"),
+    ],
+    "$": () => [
+        sprite("money"),
+        area({scale:0.1}),
+        body(),
+        origin("bot"),
+        "coin",
+    ],
+    "^": () => [
+        sprite("house"),
+        area({ scale: 0.1 }),
+        origin("bot"),
+        body(),
+
+        "brokerage",
+    ],
+})
+const player = get("player")[0]
+const money = get("coin")[0]
+const brokerage = get("brokerage")[0]
+
+
+ const fundsText = add([
+    text("FUNDS: $" + funds, {
+        width: width(),
+    }),
+    pos(player.pos.x,player.pos.y - 150),
+    origin("botleft"),
+    // scale(0.5),
+])
+const levelText = add([
+    text("LEVEL: "+ levelIdx, {
+        width: width(),
+    }),
+    pos(player.pos.x,player.pos.y - 170),
+    origin("botleft"),
+    // scale(0.5),
+])
+const houseText= add([
+    text("BROKERAGE", {
+        width: width(),
+    }),
+    pos(brokerage.pos.x-30,brokerage.pos.y-40),
+    origin("botleft"),
+    // scale(0.5),
+])
+
+
+player.play("idle")
+money.play("idle")
+player.onGround(() => {
+    if (!isKeyDown("left") && !isKeyDown("right")) {
+        player.play("idle")
+    } else {
+        player.play("run")
+    }
+})
+player.onAnimEnd("idle", () => {
+})
+onKeyPress("space", () => {
+    if (player.isGrounded()) {
+        player.jump(JUMP_FORCE)
+        player.play("jump")
+    }
+})
+onKeyDown("left", () => {
+    player.move(-SPEED, 0)
+    player.flipX(true)
+    // .play() will reset to the first frame of the anim, so we want to make sure it only runs when the current animation is not "run"
+    if (player.isGrounded() && player.curAnim() !== "run") {
+        player.play("run")
+    }
+})
+onKeyDown("right", () => {
+    player.move(SPEED, 0)
+    player.flipX(false)
+    if (player.isGrounded() && player.curAnim() !== "run") {
+        player.play("run")
+    }
+})
+onKeyRelease(["left", "right"], () => {
+    // Only reset to "idle" if player is not holding any of these keys
+    if (player.isGrounded() && !isKeyDown("left") && !isKeyDown("right")) {
+        player.play("idle")
+    }
+})
+
+player.onCollide("coin", (money) => {
+    destroy(money)
+    funds =funds+ 250
+})
+player.onCollide("brokerage", (h) => {
+    const brokerageTextbox = add([
+    rect(width() - 300, 120, { radius: 32 }),
+    origin("center"),
+    pos(player.pos.x-100, player.pos.y - 100),
+    outline(2),
+])
+
+const brokerageTextboxText = add([
+    text("SELECT A STOCK TO INVEST $250 \n(ENTER 1 2 OR 3) \n [NIO(1) TSLA(2) AAPL(3)].green \n [Close Menu(4)].red", { size: 10, width: width() - 230,styles:{
+            "green": {
+                color: rgb(0, 200, 0),
+            },
+            "red":{
+                color: rgb(200,0,0)
+            }
+        }, }),
+    
+    pos(brokerageTextbox.pos),
+    origin("center"),
+])
+onKeyPress("4", () => {
+    destroy(brokerageTextbox)
+    destroy(brokerageTextboxText)
+})
+
+onKeyPress("1", () => {
+    var decider = Math.random()
+    if(decider <=0.5 && levelIdx == 0){
+                     funds =0
+
+
+         brokerageTextboxText.text="YOU LOST ON THIS INVESTMENT :( \n -$250 \n Repeat Level(r)"
+         onKeyPress("r", () => {
+                go("game", {
+                levelIdx: levelIdx,
+                funds:funds
+
+            })
+        })
+        
+
+    }else if(decider > 0.5 && levelIdx == 0){
+                        funds =500
+
+        brokerageTextboxText.text="YOU WON ON THIS INVESTMENT :) \n +$250 \n Next Level(n)"
+        onKeyPress("n", () => {
+                go("game", {
+                levelIdx: levelIdx +1,
+                funds:funds
+            })
+        })
+        
+    }
+    
+})
+onKeyPress("2", () => {
+    var decider = Math.random()
+    if(decider <=0.5 && levelIdx == 0){
+                     funds =0
+
+
+         brokerageTextboxText.text="YOU LOST ON THIS INVESTMENT :( \n -$250 \n Repeat Level(r)"
+         onKeyPress("r", () => {
+                go("game", {
+                levelIdx: levelIdx,
+                funds:funds
+
+            })
+        })
+        
+
+    }else if(decider > 0.5 && levelIdx == 0){
+                        funds =500
+
+        brokerageTextboxText.text="YOU WON ON THIS INVESTMENT :) \n +$250 \n Next Level(n)"
+        onKeyPress("n", () => {
+                go("game", {
+                levelIdx: levelIdx +1,
+                funds:funds
+            })
+        })
+        
+    }
+})
+onKeyPress("3", () => {
+   var decider = Math.random()
+    if(decider <=0.5 && levelIdx == 0){
+                     funds =0
+
+
+         brokerageTextboxText.text="YOU LOST ON THIS INVESTMENT :( \n -$250 \n Repeat Level(r)"
+         onKeyPress("r", () => {
+                go("game", {
+                levelIdx: levelIdx,
+                funds:funds
+
+            })
+        })
+        
+
+    }else if(decider > 0.5 && levelIdx == 0){
+                        funds =500
+
+        brokerageTextboxText.text="YOU WON ON THIS INVESTMENT :) \n +$250 \n Next Level(n)"
+        onKeyPress("n", () => {
+                go("game", {
+                levelIdx: levelIdx +1,
+                funds:funds
+            })
+        })
+        
+    }
+})
+
+    
+})
+player.onUpdate(() => {
+    // Set the viewport center to player.pos
+    if(player.pos.x <= 434){
+        camPos(434,player.pos.y -100)
+
+    }else if(player.pos.x >= 625){
+        camPos(625,player.pos.y -100)
+    }else{
+        //scale2
+        //camPos(player.pos.x,player.pos.y -170)
+        camPos(player.pos.x,player.pos.y -100)
+    }
+        fundsText.text = "FUNDS: $" +funds
+        levelText.pos.x = player.pos.x
+        levelText.pos.y = player.pos.y -170
+        fundsText.pos.x = player.pos.x
+        fundsText.pos.y = player.pos.y -150
+        //console.log(funds)
+
+    
+
+})
+})
+
+
+function start() {
+    // Start with the "game" scene, with initial parameters
+    go("game", {
+        levelIdx: 0,
+        funds:0,
+    })
+}
+start()
+
+</script>
