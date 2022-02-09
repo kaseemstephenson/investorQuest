@@ -237,7 +237,7 @@ player.onCollide("coin", (money) => {
 })
 player.onCollide("brokerage", (h) => {
     const brokerageTextbox = add([
-    rect(width() - 300, 120, { radius: 32 }),
+    rect(width() - 320, 120, { radius: 32 }),
     origin("center"),
     pos(player.pos.x-100, player.pos.y - 100),
     outline(2),
@@ -280,7 +280,7 @@ onKeyPress("1", () => {
 
             })
         })
-         
+
         
 
     }else if(decider > 0.5 && levelIdx == 0){
