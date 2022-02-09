@@ -193,7 +193,7 @@ const subtitleText= add([
     text("A stock trading literacy game for kids!", {
         width: width(),
     }),
-    pos(player.pos.x-30,player.pos.y- 80),
+    pos(player.pos.x-80,player.pos.y- 80),
     origin("botleft"),
     // scale(0.5),
 ])
@@ -250,7 +250,7 @@ player.onCollide("brokerage", (h) => {
 ])
 
 const brokerageTextboxText = add([
-    text("1.FIND THE COIN \n 2. TAKE THE COIN TO THE BROKERAGE\n 3.MAKE A SUCESSFUL TRADE TO PASS THE LEVEL\n PRESS (4) TO CLOSE", { size: 10, width: width() - 230,styles:{
+    text("1.FIND THE COIN \n 2. TAKE THE COIN TO THE BROKERAGE\n 3.MAKE A SUCESSFUL TRADE TO PASS THE LEVEL\n Movement:Arrow Keys, Jump:Space\n PRESS (4) TO CLOSE", { size: 10, width: width() - 230,styles:{
             "green": {
                 color: rgb(0, 200, 0),
             },
