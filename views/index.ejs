@@ -256,6 +256,7 @@ const brokerageTextboxText = add([
     pos(brokerageTextbox.pos),
     origin("center"),
 ])
+
 onKeyPress("4", () => {
     destroy(brokerageTextbox)
     destroy(brokerageTextboxText)
@@ -265,6 +266,20 @@ onKeyPress("x", () => {
     destroy(brokerageTextboxText)
     window.location.replace(URL +"welcome")
 })  
+onKeyPress("space", () => {
+    destroy(brokerageTextbox)
+   destroy( brokerageTextboxText)
+})
+onKeyPress("left", () => {
+     destroy(brokerageTextbox)
+   destroy( brokerageTextboxText)
+    
+})
+onKeyPress("right", () => {
+     destroy(brokerageTextbox)
+   destroy( brokerageTextboxText)
+   
+})
 
 onKeyPress("1", () => {
     var decider = Math.random()
